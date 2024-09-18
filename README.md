@@ -63,6 +63,34 @@ Or, for a server with a self-signed certificate:
 ./satisfactory-explorer --endpoint game.example.com:7777 --token-file /path/to/token.txt --allow-insecure
 ```
 
+## Metrics
+
+The exporter exposes the following metrics:
+
+- `satisfactory_num_connected_players`: The number of players currently connected to the server.
+- `satisfactory_tech_tier`: The current technology tier of the server.
+- `satisfactory_total_game_duration`: The total duration of the game in seconds.
+- `satisfactory_average_tick_rate`: The average tick rate of the server.
+
+These metrics can be accessed via the `/metrics` endpoint provided by the exporter.
+
+### Example Output
+
+```
+# HELP average_tick_rate Average tick rate
+# TYPE average_tick_rate gauge
+average_tick_rate 29.91418838500977
+# HELP num_connected_players Number of connected players
+# TYPE num_connected_players gauge
+num_connected_players 1
+# HELP tech_tier Current tech tier
+# TYPE tech_tier gauge
+tech_tier 8
+# HELP total_game_duration Total game duration
+# TYPE total_game_duration gauge
+total_game_duration 413858
+```
+
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
