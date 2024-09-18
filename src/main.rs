@@ -81,10 +81,10 @@ impl Metrics {
     /// Creates a new instance of `Metrics`
     fn new() -> Self {
         Metrics {
-            num_connected_players: Gauge::new("num_connected_players", "Number of connected players").unwrap(),
-            tech_tier: Gauge::new("tech_tier", "Current tech tier").unwrap(),
-            total_game_duration: Gauge::new("total_game_duration", "Total game duration").unwrap(),
-            average_tick_rate: Gauge::new("average_tick_rate", "Average tick rate").unwrap(),
+            num_connected_players: Gauge::new("satisfactory_num_connected_players", "Number of connected players").unwrap(),
+            tech_tier: Gauge::new("satisfactory_tech_tier", "Current tech tier").unwrap(),
+            total_game_duration: Gauge::new("satisfactory_total_game_duration", "Total game duration").unwrap(),
+            average_tick_rate: Gauge::new("satisfactory_average_tick_rate", "Average tick rate").unwrap(),
         }
     }
 
