@@ -1,9 +1,4 @@
-use axum::{
-    extract::State,
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::State, response::IntoResponse, routing::get, Router};
 use clap::Parser;
 use prometheus::{Encoder, Gauge, Registry, TextEncoder};
 use reqwest::Client;
@@ -19,23 +14,55 @@ use tokio::time::interval;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Interval in seconds between each query to the server
-    #[arg(short, long, default_value = "5", help="Interval in seconds between each query to the server")]
+    #[arg(
+        long,
+        default_value = "5",
+        help = "Interval in seconds between each query to the server",
+        env = "SE_UPDATE_INTERVAL"
+    )]
     update_interval: u64,
 
     /// Hostname and port of the server to query
-    #[arg(short, long, help="Hostname and port of the server to query")]
+    #[arg(
+        long,
+        help = "Hostname and port of the server to query",
+        env = "SE_ENDPOINT"
+    )]
     endpoint: String,
 
     /// File containing the bearer token to use for authentication
-    #[arg(short, long, help="File containing the bearer token to use for authentication")]
+    #[arg(
+        long,
+        help = "File containing the bearer token to use for authentication. Mutually exclusive with --token",
+        group = "token_source",
+        env = "SE_TOKEN_FILE"
+    )]
     token_file: Option<String>,
 
+    /// Bearer token to use for authentication
+    #[arg(
+        long,
+        help = "Bearer token to use for authentication. Mutually exclusive with --token-file",
+        group = "token_source",
+        env = "SE_TOKEN"
+    )]
+    token: Option<String>,
+
     /// Allow insecure connections (e.g., to a server with a self-signed certificate)
-    #[arg(short, long, help="Allow insecure connections (e.g., to a server with a self-signed certificate)")]
+    #[arg(
+        long,
+        help = "Allow insecure connections (e.g., to a server with a self-signed certificate)",
+        env = "SE_ALLOW_INSECURE"
+    )]
     allow_insecure: bool,
 
     /// Address:Port to which the server will listen
-    #[arg(short, long, help="Address:Port to which the server will listen", default_value = "127.0.0.1:3030")]
+    #[arg(
+        long,
+        help = "Address:Port to which the server will listen",
+        default_value = "127.0.0.1:3030",
+        env = "SE_LISTEN"
+    )]
     listen: String,
 }
 
@@ -81,18 +108,29 @@ impl Metrics {
     /// Creates a new instance of `Metrics`
     fn new() -> Self {
         Metrics {
-            num_connected_players: Gauge::new("satisfactory_num_connected_players", "Number of connected players").unwrap(),
+            num_connected_players: Gauge::new(
+                "satisfactory_num_connected_players",
+                "Number of connected players",
+            )
+            .unwrap(),
             tech_tier: Gauge::new("satisfactory_tech_tier", "Current tech tier").unwrap(),
-            total_game_duration: Gauge::new("satisfactory_total_game_duration", "Total game duration").unwrap(),
-            average_tick_rate: Gauge::new("satisfactory_average_tick_rate", "Average tick rate").unwrap(),
+            total_game_duration: Gauge::new(
+                "satisfactory_total_game_duration",
+                "Total game duration",
+            )
+            .unwrap(),
+            average_tick_rate: Gauge::new("satisfactory_average_tick_rate", "Average tick rate")
+                .unwrap(),
         }
     }
 
     /// Updates the metrics with the provided game state
     fn update(&self, game_state: &ServerGameState) {
-        self.num_connected_players.set(game_state.num_connected_players as f64);
+        self.num_connected_players
+            .set(game_state.num_connected_players as f64);
         self.tech_tier.set(game_state.tech_tier as f64);
-        self.total_game_duration.set(game_state.total_game_duration as f64);
+        self.total_game_duration
+            .set(game_state.total_game_duration as f64);
         self.average_tick_rate.set(game_state.average_tick_rate);
     }
 }
@@ -119,10 +157,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let metrics = Arc::new(Metrics::new());
 
     // Register metrics with the registry
-    registry.register(Box::new(metrics.num_connected_players.clone())).unwrap();
-    registry.register(Box::new(metrics.tech_tier.clone())).unwrap();
-    registry.register(Box::new(metrics.total_game_duration.clone())).unwrap();
-    registry.register(Box::new(metrics.average_tick_rate.clone())).unwrap();
+    registry
+        .register(Box::new(metrics.num_connected_players.clone()))
+        .unwrap();
+    registry
+        .register(Box::new(metrics.tech_tier.clone()))
+        .unwrap();
+    registry
+        .register(Box::new(metrics.total_game_duration.clone()))
+        .unwrap();
+    registry
+        .register(Box::new(metrics.average_tick_rate.clone()))
+        .unwrap();
 
     // Create shared state
     let shared_state: SharedState = Arc::new(((*metrics).clone(), registry));
@@ -139,7 +185,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = client_builder.build()?;
 
     // Read the bearer token if provided
-    let bearer_token = args.token_file.map(|file| fs::read_to_string(file).expect("Failed to read token file"));
+    let bearer_token = args.token.or(args
+        .token_file
+        .map(|file| fs::read_to_string(file).expect("Failed to read token file")));
 
     let query_endpoint = format!("https://{}/api/v1", args.endpoint);
 
@@ -159,14 +207,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             match request.send().await {
-                Ok(response) => {
-                    match response.json::<ServerResponse>().await {
-                        Ok(server_response) => {
-                            metrics_clone.update(&server_response.data.server_game_state);
-                        }
-                        Err(e) => eprintln!("Failed to parse service metrics: {}", e),
+                Ok(response) => match response.json::<ServerResponse>().await {
+                    Ok(server_response) => {
+                        metrics_clone.update(&server_response.data.server_game_state);
                     }
-                }
+                    Err(e) => eprintln!("Failed to parse service metrics: {}", e),
+                },
                 Err(e) => eprintln!("Failed to fetch metrics: {}", e),
             }
         }
