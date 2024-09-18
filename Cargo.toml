@@ -1,7 +1,15 @@
 [package]
 name = "satisfactory-exporter"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+license = "MIT"
+description = "A Prometheus exporter for the game Satisfactory."
+repository = "https://github.com/dwmunster/satisfactory-exporter"
+homepage = "https://github.com/dwmunster/satisfactory-exporter"
+readme = "README.md"
+keywords = ["prometheus", "exporter", "satisfactory"]
+categories = ["command-line-utilities", "network-programming"]
+authors = ["Drayton Munster <drayton@munster.dev>"]
 
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
