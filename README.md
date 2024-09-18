@@ -94,3 +94,8 @@ total_game_duration 413858
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+## See Also
+
+- [Shinigami92/satisfactory-server-prometheus-exporter](https://github.com/Shinigami92/satisfactory-server-prometheus-exporter):
+  A typescript-based exporter with a more complete set of metrics.
